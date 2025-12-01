@@ -3,6 +3,7 @@ let alteredImageCanvas = null;
 let selectedFrame = null;
 const variationCanvases = [];
 const framedCanvases = [];
+let generationCount = 0; // Track number of image generations
 
 const imageInput = document.getElementById('imageInput');
 const outputCanvas = document.getElementById('outputCanvas');
@@ -58,6 +59,16 @@ const frameFiles = [
 imageInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
+        // Reset generation count when new image is uploaded
+        generationCount = 0;
+        
+        // Reset button to original state
+        if (moreBtn) {
+            moreBtn.textContent = 'i want more image';
+            moreBtn.classList.remove('gold-btn');
+            moreBtn.classList.add('more-btn');
+        }
+        
         // Clear gallery when new image is uploaded
         if (gallery) {
             gallery.innerHTML = '';
@@ -258,10 +269,18 @@ downloadBtn.addEventListener('click', () => {
     });
 });
 
-// Generate another random variation
+// Generate another random variation or go to gallery after 3 generations
 if (moreBtn) {
     moreBtn.addEventListener('click', () => {
         if (!originalImage) return;
+        
+        // After 3 generations, redirect to gallery
+        if (generationCount >= 3) {
+            window.location.href = 'gallery.html';
+            return;
+        }
+        
+        // Otherwise, generate another variation
         applyRandomEffects();
     });
 }
@@ -278,6 +297,16 @@ function randomInt(min, max) {
 // Apply random experimental effects (Man Ray style)
 function applyRandomEffects() {
     if (!originalImage) return;
+    
+    // Increment generation count
+    generationCount++;
+    
+    // After 3 generations, transform the button
+    if (generationCount >= 3 && moreBtn) {
+        moreBtn.textContent = 'i want all image';
+        moreBtn.classList.add('gold-btn');
+        moreBtn.classList.remove('more-btn');
+    }
 
     // Keep canvas at original image size (for display)
     const displayWidth = originalImage.width;

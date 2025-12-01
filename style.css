@@ -170,6 +170,26 @@ h1 {
     color: white;
 }
 
+.gold-btn {
+    display: inline-block;
+    padding: 15px 40px;
+    background-color: #D4AF37;
+    border: 2px solid #B8860B;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #1a1a1a;
+    font-weight: bold;
+}
+
+.gold-btn:hover {
+    background-color: #B8860B;
+    border-color: #D4AF37;
+    color: #000;
+    transform: scale(1.05);
+}
+
 .gallery {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -201,34 +221,6 @@ h1 {
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.all-images-btn-container {
-    position: fixed;
-    left: 50%;
-    bottom: 100px;
-    transform: translateX(-50%);
-    z-index: 11;
-    display: block !important;
-    visibility: visible !important;
-}
-
-.all-images-btn {
-    display: inline-block !important;
-    padding: 15px 40px;
-    background-color: white;
-    border: 2px solid black;
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 1em;
-    text-decoration: none;
-    color: black;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    visibility: visible !important;
-}
-
-.all-images-btn:hover {
-    background-color: black;
-    color: white;
-}
 
 @media (max-width: 768px) {
     h1 {
