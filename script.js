@@ -123,6 +123,19 @@ function loadRandomFrame() {
         outputCanvas.height = alteredImageCanvas.height;
         ctx.drawImage(alteredImageCanvas, 0, 0);
         outputSection.style.display = 'block';
+        
+        // Still add to gallery even if frame fails
+        if (gallery && alteredImageCanvas) {
+            const thumbCanvas = document.createElement('canvas');
+            const maxThumbSize = 300;
+            const thumbScale = Math.min(maxThumbSize / alteredImageCanvas.width, maxThumbSize / alteredImageCanvas.height, 1);
+            thumbCanvas.width = alteredImageCanvas.width * thumbScale;
+            thumbCanvas.height = alteredImageCanvas.height * thumbScale;
+            const thumbCtx = thumbCanvas.getContext('2d');
+            thumbCtx.drawImage(alteredImageCanvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+            gallery.appendChild(thumbCanvas);
+            console.log('✓ Added unframed image to gallery. Total images:', gallery.children.length);
+        }
     };
     
     frameImg.src = `./FRAMES/${randomFrameFile}`;
@@ -230,7 +243,7 @@ function compositeImageWithFrame() {
         if (moreBtn) {
             moreBtn.style.display = 'inline-block';
         }
-        console.log('✓ Output displayed');
+        console.log('✓ Output displayed. Generation:', generationCount, 'Gallery items:', gallery ? gallery.children.length : 0);
     } catch (error) {
         console.error('✗ Error compositing:', error);
         console.error(error.stack);
