@@ -111,12 +111,13 @@
     <script>
         // Supabase configuration
         // Reads from config.js (window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
-        const SUPABASE_URL = window.SUPABASE_URL || 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+        // Fallback to hardcoded values if config.js not available
+        const SUPABASE_URL = window.SUPABASE_URL || 'https://wpsxzdivbmxogqqfvxgb.supabase.co';
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwc3h6ZGl2Ym14b2dxcWZ2eGdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2MTEwNDIsImV4cCI6MjA4MDE4NzA0Mn0.0I40DrIRhA8AaOHSVIPPjeX_enx6XYzndbNRfwzx210';
         const SUPABASE_BUCKET = window.SUPABASE_BUCKET || 'gallery';
 
         let supabaseClient = null;
-        if (SUPABASE_URL && SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
+        if (SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL.includes('supabase.co')) {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 

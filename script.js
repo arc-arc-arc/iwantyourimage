@@ -13,15 +13,18 @@ const moreBtn = document.getElementById('moreBtn');
 const gallery = document.getElementById('gallery');
 
 // Supabase configuration
-// Reads from config.js (local) or window variables (Vercel)
-// For Vercel: Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY as environment variables
-const SUPABASE_URL = window.SUPABASE_URL || (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_URL) || 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY) || 'YOUR_SUPABASE_ANON_KEY';
+// Reads from config.js (local) or uses fallback values
+// Note: anon key is public and safe to include in client-side code
+const SUPABASE_URL = window.SUPABASE_URL || 'https://wpsxzdivbmxogqqfvxgb.supabase.co';
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwc3h6ZGl2Ym14b2dxcWZ2eGdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2MTEwNDIsImV4cCI6MjA4MDE4NzA0Mn0.0I40DrIRhA8AaOHSVIPPjeX_enx6XYzndbNRfwzx210';
 const SUPABASE_BUCKET = window.SUPABASE_BUCKET || 'gallery';
 
 let supabaseClient = null;
-if (SUPABASE_URL && SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
+if (SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL.includes('supabase.co')) {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('✓ Supabase client initialized');
+} else {
+    console.warn('⚠️ Supabase not configured properly');
 }
 
 // Available frame images (actual PNG files in FRAMES directory)
