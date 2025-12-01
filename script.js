@@ -216,6 +216,7 @@ function compositeImageWithFrame() {
             const thumbCtx = thumbCanvas.getContext('2d');
             thumbCtx.drawImage(outputCanvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
             gallery.appendChild(thumbCanvas);
+            console.log('✓ Added image to gallery. Total images:', gallery.children.length);
         }
         
         // Hide the main outputCanvas since all frames go to gallery
@@ -249,8 +250,8 @@ if (moreBtn) {
     moreBtn.addEventListener('click', () => {
         if (!originalImage) return;
         
-        // After 3 generations, redirect to gallery
-        if (generationCount >= 3) {
+        // After 7 generations, redirect to gallery
+        if (generationCount >= 7) {
             window.location.href = 'gallery.html';
             return;
         }
@@ -276,8 +277,8 @@ function applyRandomEffects() {
     // Increment generation count
     generationCount++;
     
-    // After 3 generations, transform the button
-    if (generationCount >= 3 && moreBtn) {
+    // After 7 generations, transform the button
+    if (generationCount >= 7 && moreBtn) {
         moreBtn.textContent = 'i want all image';
         moreBtn.classList.add('gold-btn');
         moreBtn.classList.remove('more-btn');
