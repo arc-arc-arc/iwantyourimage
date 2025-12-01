@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iwanturimage</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="input-section">
+            <label for="imageInput" class="input-label">i want your image</label>
+            <input type="file" id="imageInput" accept="image/*">
+        </div>
+
+        <div class="output-section" id="outputSection" style="display: none;">
+            <div class="frame-container" style="display: none;">
+                <canvas id="outputCanvas"></canvas>
+            </div>
+            <div class="buttons-row">
+                <button id="downloadBtn" class="download-btn">download</button>
+                <button id="moreBtn" class="more-btn">i want more image</button>
+            </div>
+            <div id="gallery" class="gallery"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

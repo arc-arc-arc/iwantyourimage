@@ -1,0 +1,226 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Times New Roman', Times, serif;
+    background-color: white;
+    color: black;
+    min-height: 100vh;
+    padding: 40px 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center;
+    font-size: 2.5em;
+    margin-bottom: 40px;
+    font-weight: normal;
+    letter-spacing: 2px;
+}
+
+.input-section {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.input-label {
+    display: block;
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    font-style: italic;
+}
+
+#imageInput {
+    display: none;
+}
+
+.input-section label {
+    cursor: pointer;
+    display: inline-block;
+    padding: 15px 30px;
+    border: 2px solid black;
+    background-color: white;
+    font-size: 1em;
+    transition: all 0.3s ease;
+}
+
+.input-section label:hover {
+    background-color: black;
+    color: white;
+}
+
+.controls-section {
+    margin-bottom: 40px;
+    padding: 30px;
+    border: 1px solid #e0e0e0;
+}
+
+.control-group {
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.control-group label {
+    min-width: 120px;
+    font-size: 1em;
+}
+
+.control-group input[type="range"] {
+    flex: 1;
+    height: 6px;
+    background: #e0e0e0;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: black;
+    cursor: pointer;
+}
+
+.control-group input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: black;
+    cursor: pointer;
+    border: none;
+}
+
+.control-group span {
+    min-width: 50px;
+    text-align: right;
+    font-size: 0.9em;
+}
+
+.download-btn {
+    display: none;
+    padding: 15px 40px;
+    background-color: white;
+    border: 2px solid black;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 0 auto;
+}
+
+.download-btn:hover {
+    background-color: black;
+    color: white;
+}
+
+.output-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 40px;
+    gap: 30px;
+    width: 100%;
+    padding-bottom: 80px; /* room for fixed buttons at bottom */
+}
+
+.frame-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.buttons-row {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 20px;
+    background-color: white;
+    z-index: 10;
+}
+
+.more-btn {
+    display: none;
+    padding: 15px 40px;
+    background-color: white;
+    border: 2px solid black;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.more-btn:hover {
+    background-color: black;
+    color: white;
+}
+
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+    width: 100%;
+    padding: 20px;
+    justify-items: center;
+    align-items: start;
+    max-width: 100vw;
+}
+
+.gallery canvas {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+#outputCanvas {
+    display: block;
+    max-width: 400px;
+    width: 100%;
+    height: auto;
+    background-color: #f5f5f0;
+    box-shadow: 
+        inset 0 3px 10px rgba(0, 0, 0, 0.2),
+        inset 0 0 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2em;
+    }
+    
+    .control-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .control-group label {
+        min-width: auto;
+    }
+    
+    .control-group input[type="range"] {
+        width: 100%;
+    }
+    
+    .frame {
+        padding: 20px;
+    }
+}
+
