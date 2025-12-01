@@ -13,11 +13,11 @@ const moreBtn = document.getElementById('moreBtn');
 const gallery = document.getElementById('gallery');
 
 // Supabase configuration
-// Set these via window variables or inject via build process
-// For Vercel: Add environment variables and inject them in a build script
-const SUPABASE_URL = window.SUPABASE_URL || 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
-const SUPABASE_BUCKET = window.SUPABASE_BUCKET || 'images'; // Replace with your bucket name if different
+// Reads from config.js (local) or window variables (Vercel)
+// For Vercel: Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY as environment variables
+const SUPABASE_URL = window.SUPABASE_URL || (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_URL) || 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY) || 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_BUCKET = window.SUPABASE_BUCKET || 'gallery';
 
 let supabaseClient = null;
 if (SUPABASE_URL && SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
