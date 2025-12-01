@@ -35,8 +35,14 @@ let supabaseClient = null;
 if (SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL.includes('supabase.co')) {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('✓ Supabase client initialized');
+    console.log('  URL:', SUPABASE_URL);
+    console.log('  Bucket:', SUPABASE_BUCKET);
+    console.log('  Anon key length:', SUPABASE_ANON_KEY.length);
 } else {
     console.warn('⚠️ Supabase not configured properly');
+    console.warn('  SUPABASE_URL:', SUPABASE_URL);
+    console.warn('  SUPABASE_ANON_KEY exists:', !!SUPABASE_ANON_KEY);
+    console.warn('  URL contains supabase.co:', SUPABASE_URL?.includes('supabase.co'));
 }
 
 // Available frame images (actual PNG files in FRAMES directory)
@@ -723,8 +729,14 @@ function applyDistortion(imageData, width, height, strength) {
 
 // Upload image to Supabase storage
 async function uploadImageToSupabase(canvas) {
+    console.log('uploadImageToSupabase called');
+    console.log('supabaseClient exists:', !!supabaseClient);
+    console.log('SUPABASE_BUCKET:', SUPABASE_BUCKET);
+    
     if (!supabaseClient) {
-        console.log('Supabase not configured, skipping upload');
+        console.error('❌ Supabase not configured, skipping upload');
+        console.error('SUPABASE_URL:', SUPABASE_URL);
+        console.error('SUPABASE_ANON_KEY exists:', !!SUPABASE_ANON_KEY);
         return;
     }
     
@@ -732,9 +744,11 @@ async function uploadImageToSupabase(canvas) {
         // Convert canvas to blob
         canvas.toBlob(async (blob) => {
             if (!blob) {
-                console.error('Failed to convert canvas to blob');
+                console.error('❌ Failed to convert canvas to blob');
                 return;
             }
+            
+            console.log('✓ Canvas converted to blob, size:', blob.size, 'bytes');
             
             // Get user ID and generate unique filename
             const userId = getUserId();
@@ -745,6 +759,11 @@ async function uploadImageToSupabase(canvas) {
             // Create object key: ${userId}/${randomFilename}
             const objectKey = `${userId}/${randomFilename}`;
             
+            console.log('📤 Uploading to Supabase...');
+            console.log('  Bucket:', SUPABASE_BUCKET);
+            console.log('  Object key:', objectKey);
+            console.log('  User ID:', userId);
+            
             // Upload to Supabase bucket
             const { data, error } = await supabaseClient.storage
                 .from(SUPABASE_BUCKET)
@@ -754,12 +773,17 @@ async function uploadImageToSupabase(canvas) {
                 });
             
             if (error) {
-                console.error('Error uploading to Supabase:', error);
+                console.error('❌ Error uploading to Supabase:', error);
+                console.error('  Error message:', error.message);
+                console.error('  Error code:', error.statusCode);
             } else {
-                console.log('✓ Image uploaded to Supabase:', data.path);
+                console.log('✅ Image uploaded successfully to Supabase!');
+                console.log('  Path:', data.path);
+                console.log('  Full URL:', supabaseClient.storage.from(SUPABASE_BUCKET).getPublicUrl(data.path).data.publicUrl);
             }
         }, 'image/png');
     } catch (error) {
-        console.error('Error in uploadImageToSupabase:', error);
+        console.error('❌ Exception in uploadImageToSupabase:', error);
+        console.error('  Stack:', error.stack);
     }
 }

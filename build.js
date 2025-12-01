@@ -3,12 +3,17 @@ const fs = require('fs');
 const path = require('path');
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
 const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'gallery';
+
+console.log('Build script running...');
+console.log('SUPABASE_URL:', SUPABASE_URL ? 'Found' : 'Missing');
+console.log('SUPABASE_ANON_KEY:', SUPABASE_ANON_KEY ? 'Found' : 'Missing');
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.log('⚠️  Supabase credentials not found in environment variables');
-  console.log('   The site will work if config.js is present');
+  console.log('   Looking for: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  console.log('   The site will work if config.js is present or fallback values are used');
   process.exit(0);
 }
 

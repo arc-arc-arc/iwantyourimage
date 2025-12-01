@@ -16,9 +16,11 @@
    - **Value**: `https://wpsxzdivbmxogqqfvxgb.supabase.co`
    - **Environment**: Select **Production**, **Preview**, and **Development**
    
-   - **Name**: `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - **Name**: `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or `NEXT_PUBLIC_SUPABASE_KEY` - both work)
    - **Value**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwc3h6ZGl2Ym14b2dxcWZ2eGdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2MTEwNDIsImV4cCI6MjA4MDE4NzA0Mn0.0I40DrIRhA8AaOHSVIPPjeX_enx6XYzndbNRfwzx210`
    - **Environment**: Select **Production**, **Preview**, and **Development**
+   
+   **Note:** The variable name should be `NEXT_PUBLIC_SUPABASE_ANON_KEY` (with "ANON" in it), but the build script also accepts `NEXT_PUBLIC_SUPABASE_KEY` as a fallback.
 
 4. Click **Save**
 
