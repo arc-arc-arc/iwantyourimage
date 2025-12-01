@@ -47,23 +47,70 @@ Or use the visual policy editor:
 
 ## Option 2: Using SQL Editor (Advanced)
 
-Go to **SQL Editor** in Supabase and run:
+Go to **SQL Editor** in Supabase and run these **ONE AT A TIME** (run each statement separately):
 
+### Step 1: Allow public uploads
 ```sql
--- Allow public uploads
 CREATE POLICY "Allow public uploads"
 ON storage.objects
 FOR INSERT
 TO anon, authenticated
 WITH CHECK (bucket_id = 'gallery');
+```
 
--- Allow public reads
+### Step 2: Allow public reads
+```sql
 CREATE POLICY "Allow public reads"
 ON storage.objects
 FOR SELECT
 TO anon, authenticated
 USING (bucket_id = 'gallery');
 ```
+
+**Important:** Run each CREATE POLICY statement separately, not all at once!
+
+If you get an error that the policy already exists, first drop it:
+```sql
+DROP POLICY IF EXISTS "Allow public uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Allow public reads" ON storage.objects;
+```
+
+Then create them again.
+
+## Quick Fix: If You Get Syntax Errors
+
+If you're getting syntax errors, try this approach:
+
+1. Go to **SQL Editor** in Supabase
+2. Run **ONLY this first statement** (copy the entire block):
+```sql
+DROP POLICY IF EXISTS "Allow public uploads" ON storage.objects;
+```
+
+3. Then run **ONLY this second statement**:
+```sql
+CREATE POLICY "Allow public uploads"
+ON storage.objects
+FOR INSERT
+TO anon, authenticated
+WITH CHECK (bucket_id = 'gallery');
+```
+
+4. Then run **ONLY this third statement**:
+```sql
+DROP POLICY IF EXISTS "Allow public reads" ON storage.objects;
+```
+
+5. Finally, run **ONLY this fourth statement**:
+```sql
+CREATE POLICY "Allow public reads"
+ON storage.objects
+FOR SELECT
+TO anon, authenticated
+USING (bucket_id = 'gallery');
+```
+
+**Key:** Run each statement separately, one at a time. Don't run multiple statements together.
 
 ## Option 3: More Restrictive (Recommended for Production)
 
