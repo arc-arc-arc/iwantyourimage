@@ -110,10 +110,10 @@
     <script src="config.js"></script>
     <script>
         // Supabase configuration
-        // Reads from config.js (window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
-        // Fallback to hardcoded values if config.js not available
-        const SUPABASE_URL = window.SUPABASE_URL || 'https://wpsxzdivbmxogqqfvxgb.supabase.co';
-        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwc3h6ZGl2Ym14b2dxcWZ2eGdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2MTEwNDIsImV4cCI6MjA4MDE4NzA0Mn0.0I40DrIRhA8AaOHSVIPPjeX_enx6XYzndbNRfwzx210';
+        // Priority: 1) window variables (from config.js), 2) Vercel env vars, 3) fallback values
+        // For Vercel: Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY as environment variables
+        const SUPABASE_URL = window.SUPABASE_URL || (typeof window !== 'undefined' && window.__ENV__?.NEXT_PUBLIC_SUPABASE_URL) || 'https://wpsxzdivbmxogqqfvxgb.supabase.co';
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || (typeof window !== 'undefined' && window.__ENV__?.NEXT_PUBLIC_SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwc3h6ZGl2Ym14b2dxcWZ2eGdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2MTEwNDIsImV4cCI6MjA4MDE4NzA0Mn0.0I40DrIRhA8AaOHSVIPPjeX_enx6XYzndbNRfwzx210';
         const SUPABASE_BUCKET = window.SUPABASE_BUCKET || 'gallery';
 
         let supabaseClient = null;
@@ -135,43 +135,82 @@
             }
 
             try {
-                // List all files in the bucket
-                const { data: files, error } = await supabaseClient.storage
+                // Recursively list all files from all user folders
+                const allImageFiles = [];
+                
+                // First, list all folders (user IDs)
+                const { data: folders, error: foldersError } = await supabaseClient.storage
                     .from(SUPABASE_BUCKET)
                     .list('', {
                         limit: 1000,
-                        offset: 0,
-                        sortBy: { column: 'created_at', order: 'desc' }
+                        offset: 0
                     });
 
-                if (error) {
-                    throw error;
+                if (foldersError) {
+                    throw foldersError;
+                }
+
+                // Filter to get only folders (user directories)
+                const userFolders = folders.filter(item => !item.name.includes('.'));
+
+                // List files from each user folder
+                for (const folder of userFolders) {
+                    const { data: files, error: filesError } = await supabaseClient.storage
+                        .from(SUPABASE_BUCKET)
+                        .list(folder.name, {
+                            limit: 1000,
+                            offset: 0
+                        });
+
+                    if (!filesError && files) {
+                        // Filter to only image files and add folder path
+                        const imageFiles = files
+                            .filter(file => file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+                            .map(file => ({
+                                ...file,
+                                fullPath: `${folder.name}/${file.name}`
+                            }));
+                        
+                        allImageFiles.push(...imageFiles);
+                    }
+                }
+
+                // Also check root level for any images (backward compatibility)
+                const { data: rootFiles, error: rootError } = await supabaseClient.storage
+                    .from(SUPABASE_BUCKET)
+                    .list('', {
+                        limit: 1000,
+                        offset: 0
+                    });
+
+                if (!rootError && rootFiles) {
+                    const rootImageFiles = rootFiles
+                        .filter(file => file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+                        .map(file => ({
+                            ...file,
+                            fullPath: file.name
+                        }));
+                    
+                    allImageFiles.push(...rootImageFiles);
                 }
 
                 loadingEl.style.display = 'none';
 
-                if (!files || files.length === 0) {
+                if (allImageFiles.length === 0) {
                     emptyEl.style.display = 'block';
                     return;
                 }
 
-                // Filter to only image files
-                const imageFiles = files.filter(file => 
-                    file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)
-                );
-
-                if (imageFiles.length === 0) {
-                    emptyEl.style.display = 'block';
-                    return;
-                }
+                // Sort by name (which includes timestamp) descending
+                allImageFiles.sort((a, b) => b.name.localeCompare(a.name));
 
                 galleryEl.style.display = 'grid';
 
                 // Get public URLs for each image
-                for (const file of imageFiles) {
+                for (const file of allImageFiles) {
                     const { data: urlData } = supabaseClient.storage
                         .from(SUPABASE_BUCKET)
-                        .getPublicUrl(file.name);
+                        .getPublicUrl(file.fullPath);
 
                     if (urlData?.publicUrl) {
                         const item = document.createElement('div');

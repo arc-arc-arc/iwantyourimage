@@ -12,11 +12,23 @@ const downloadBtn = document.getElementById('downloadBtn');
 const moreBtn = document.getElementById('moreBtn');
 const gallery = document.getElementById('gallery');
 
+// Get or create user ID (stored in localStorage)
+function getUserId() {
+    let userId = localStorage.getItem('userId');
+    if (!userId) {
+        // Generate a unique user ID
+        userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('userId', userId);
+    }
+    return userId;
+}
+
 // Supabase configuration
-// Reads from config.js (local) or uses fallback values
+// Priority: 1) window variables (from config.js), 2) Vercel env vars (NEXT_PUBLIC_*), 3) fallback values
 // Note: anon key is public and safe to include in client-side code
-const SUPABASE_URL = window.SUPABASE_URL || 'https://wpsxzdivbmxogqqfvxgb.supabase.co';
-const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwc3h6ZGl2Ym14b2dxcWZ2eGdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2MTEwNDIsImV4cCI6MjA4MDE4NzA0Mn0.0I40DrIRhA8AaOHSVIPPjeX_enx6XYzndbNRfwzx210';
+// For Vercel: Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY as environment variables
+const SUPABASE_URL = window.SUPABASE_URL || (typeof window !== 'undefined' && window.__ENV__?.NEXT_PUBLIC_SUPABASE_URL) || 'https://wpsxzdivbmxogqqfvxgb.supabase.co';
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || (typeof window !== 'undefined' && window.__ENV__?.NEXT_PUBLIC_SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwc3h6ZGl2Ym14b2dxcWZ2eGdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2MTEwNDIsImV4cCI6MjA4MDE4NzA0Mn0.0I40DrIRhA8AaOHSVIPPjeX_enx6XYzndbNRfwzx210';
 const SUPABASE_BUCKET = window.SUPABASE_BUCKET || 'gallery';
 
 let supabaseClient = null;
@@ -724,15 +736,19 @@ async function uploadImageToSupabase(canvas) {
                 return;
             }
             
-            // Generate unique filename
+            // Get user ID and generate unique filename
+            const userId = getUserId();
             const timestamp = Date.now();
             const randomId = Math.random().toString(36).substring(2, 15);
-            const filename = `${timestamp}-${randomId}.png`;
+            const randomFilename = `${timestamp}-${randomId}.png`;
+            
+            // Create object key: ${userId}/${randomFilename}
+            const objectKey = `${userId}/${randomFilename}`;
             
             // Upload to Supabase bucket
             const { data, error } = await supabaseClient.storage
                 .from(SUPABASE_BUCKET)
-                .upload(filename, blob, {
+                .upload(objectKey, blob, {
                     contentType: 'image/png',
                     upsert: false
                 });
