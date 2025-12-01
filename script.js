@@ -263,8 +263,8 @@ if (moreBtn) {
     moreBtn.addEventListener('click', () => {
         if (!originalImage) return;
         
-        // After 7 generations, redirect to gallery
-        if (generationCount >= 7) {
+        // After 3 generations, redirect to gallery
+        if (generationCount >= 3) {
             window.location.href = 'gallery.html';
             return;
         }
@@ -290,8 +290,8 @@ function applyRandomEffects() {
     // Increment generation count
     generationCount++;
     
-    // After 7 generations, transform the button
-    if (generationCount >= 7 && moreBtn) {
+    // After 3 generations, transform the button
+    if (generationCount >= 3 && moreBtn) {
         moreBtn.textContent = 'i want all image';
         moreBtn.classList.add('gold-btn');
         moreBtn.classList.remove('more-btn');
@@ -429,6 +429,8 @@ function applyRandomEffects() {
     const variationCtx = variationCanvas.getContext('2d');
     variationCtx.drawImage(outputCanvas, 0, 0);
     variationCanvases.push(variationCanvas);
+    
+    console.log('Generation', generationCount, 'complete. Loading frame...');
     
     // Load and apply random frame
     loadRandomFrame();
