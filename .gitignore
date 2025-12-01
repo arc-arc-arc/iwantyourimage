@@ -2,3 +2,6 @@
 .AppleDouble
 .LSOverride
 
+# Supabase config (contains API keys)
+config.js
+

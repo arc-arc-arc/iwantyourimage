@@ -12,6 +12,18 @@ const downloadBtn = document.getElementById('downloadBtn');
 const moreBtn = document.getElementById('moreBtn');
 const gallery = document.getElementById('gallery');
 
+// Supabase configuration
+// Set these via window variables or inject via build process
+// For Vercel: Add environment variables and inject them in a build script
+const SUPABASE_URL = window.SUPABASE_URL || 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_BUCKET = window.SUPABASE_BUCKET || 'images'; // Replace with your bucket name if different
+
+let supabaseClient = null;
+if (SUPABASE_URL && SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
 // Available frame images (actual PNG files in FRAMES directory)
 const frameFiles = [
     'Border_Frame_Clip_Art_Gold_PNG_Image.png',
@@ -158,6 +170,9 @@ function compositeImageWithFrame() {
         const framedCtx = framedCanvas.getContext('2d');
         framedCtx.drawImage(outputCanvas, 0, 0);
         framedCanvases.push(framedCanvas);
+        
+        // Upload to Supabase
+        uploadImageToSupabase(framedCanvas);
         
         // Add all frames (including first) to gallery grid
         // All images will scale to fit the screen via CSS grid
@@ -689,4 +704,43 @@ function applyDistortion(imageData, width, height, strength) {
     }
     
     return destData;
+}
+
+// Upload image to Supabase storage
+async function uploadImageToSupabase(canvas) {
+    if (!supabaseClient) {
+        console.log('Supabase not configured, skipping upload');
+        return;
+    }
+    
+    try {
+        // Convert canvas to blob
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                console.error('Failed to convert canvas to blob');
+                return;
+            }
+            
+            // Generate unique filename
+            const timestamp = Date.now();
+            const randomId = Math.random().toString(36).substring(2, 15);
+            const filename = `${timestamp}-${randomId}.png`;
+            
+            // Upload to Supabase bucket
+            const { data, error } = await supabaseClient.storage
+                .from(SUPABASE_BUCKET)
+                .upload(filename, blob, {
+                    contentType: 'image/png',
+                    upsert: false
+                });
+            
+            if (error) {
+                console.error('Error uploading to Supabase:', error);
+            } else {
+                console.log('✓ Image uploaded to Supabase:', data.path);
+            }
+        }, 'image/png');
+    } catch (error) {
+        console.error('Error in uploadImageToSupabase:', error);
+    }
 }

@@ -201,6 +201,35 @@ h1 {
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+.all-images-btn-container {
+    position: fixed;
+    left: 50%;
+    bottom: 100px;
+    transform: translateX(-50%);
+    z-index: 11;
+    display: block !important;
+    visibility: visible !important;
+}
+
+.all-images-btn {
+    display: inline-block !important;
+    padding: 15px 40px;
+    background-color: white;
+    border: 2px solid black;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1em;
+    text-decoration: none;
+    color: black;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    visibility: visible !important;
+}
+
+.all-images-btn:hover {
+    background-color: black;
+    color: white;
+}
+
 @media (max-width: 768px) {
     h1 {
         font-size: 2em;
@@ -221,6 +250,10 @@ h1 {
     
     .frame {
         padding: 20px;
+    }
+    
+    .all-images-btn-container {
+        bottom: 70px;
     }
 }
 
