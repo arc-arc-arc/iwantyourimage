@@ -16,16 +16,26 @@
 4. Make it **Public** (so images can be viewed in the gallery)
 5. Click **Create bucket**
 
-## 3. Set Up Bucket Policies
+## 3. Set Up Bucket Policies (REQUIRED)
 
-1. Go to **Storage** → **Policies** for your `images` bucket
-2. Add policies to allow:
-   - **INSERT** (for uploading images)
-   - **SELECT** (for reading/listing images)
+**⚠️ IMPORTANT:** Without policies, uploads will fail with 403 errors!
 
-Example policies:
-- **For INSERT**: Allow authenticated or anonymous users to upload
-- **For SELECT**: Allow public read access
+1. Go to **Storage** → Click on your `gallery` bucket → **Policies** tab
+2. Click **"New Policy"** or **"Add Policy"**
+
+### Create Two Policies:
+
+**Policy 1: Allow Public Uploads**
+- **Operation:** INSERT
+- **Target roles:** anon, authenticated
+- **Policy:** Allow all (or restrict to `user_*` folders if preferred)
+
+**Policy 2: Allow Public Reads**
+- **Operation:** SELECT  
+- **Target roles:** anon, authenticated
+- **Policy:** Allow all
+
+**See `SUPABASE_POLICIES.md` for detailed step-by-step instructions with SQL examples.**
 
 ## 4. Configure in Your Code
 
