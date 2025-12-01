@@ -9,7 +9,6 @@ const imageInput = document.getElementById('imageInput');
 const outputCanvas = document.getElementById('outputCanvas');
 const ctx = outputCanvas.getContext('2d');
 const outputSection = document.getElementById('outputSection');
-const downloadBtn = document.getElementById('downloadBtn');
 const moreBtn = document.getElementById('moreBtn');
 const gallery = document.getElementById('gallery');
 
@@ -124,7 +123,6 @@ function loadRandomFrame() {
         outputCanvas.height = alteredImageCanvas.height;
         ctx.drawImage(alteredImageCanvas, 0, 0);
         outputSection.style.display = 'block';
-        downloadBtn.style.display = 'block';
     };
     
     frameImg.src = `./FRAMES/${randomFrameFile}`;
@@ -229,7 +227,6 @@ function compositeImageWithFrame() {
         
         // Show output section and buttons
         outputSection.style.display = 'block';
-        downloadBtn.style.display = 'block';
         if (moreBtn) {
             moreBtn.style.display = 'inline-block';
         }
@@ -243,31 +240,10 @@ function compositeImageWithFrame() {
             outputCanvas.height = alteredImageCanvas.height;
             ctx.drawImage(alteredImageCanvas, 0, 0);
             outputSection.style.display = 'block';
-            downloadBtn.style.display = 'block';
         }
     }
 }
 
-// Download all framed images as separate files
-downloadBtn.addEventListener('click', () => {
-    if (!framedCanvases.length) return;
-
-    console.log('Downloading each framed image as a separate file...');
-
-    framedCanvases.forEach((canvas, index) => {
-        canvas.toBlob((blob) => {
-            if (!blob) return;
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `framed-${index + 1}.png`;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            URL.revokeObjectURL(url);
-        }, 'image/png');
-    });
-});
 
 // Generate another random variation or go to gallery after 3 generations
 if (moreBtn) {
