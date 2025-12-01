@@ -138,7 +138,6 @@ function compositeImageWithFrame() {
             outputCanvas.height = alteredImageCanvas.height;
             ctx.drawImage(alteredImageCanvas, 0, 0);
             outputSection.style.display = 'block';
-            downloadBtn.style.display = 'block';
         }
         return;
     }
