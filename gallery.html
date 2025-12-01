@@ -197,8 +197,11 @@
                     return;
                 }
 
-                // Sort by name (which includes timestamp) descending
-                allImageFiles.sort((a, b) => b.name.localeCompare(a.name));
+                // Shuffle array to display in random order
+                for (let i = allImageFiles.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [allImageFiles[i], allImageFiles[j]] = [allImageFiles[j], allImageFiles[i]];
+                }
 
                 galleryEl.style.display = 'grid';
 

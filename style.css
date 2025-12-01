@@ -175,12 +175,13 @@ h1 {
     padding: 15px 40px;
     background-color: #D4AF37;
     border: 2px solid #B8860B;
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 1em;
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.3em;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
     color: #1a1a1a;
-    font-weight: bold;
+    letter-spacing: 1px;
 }
 
 .gold-btn:hover {
