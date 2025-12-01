@@ -229,7 +229,12 @@ function compositeImageWithFrame() {
             const thumbCtx = thumbCanvas.getContext('2d');
             thumbCtx.drawImage(outputCanvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
             gallery.appendChild(thumbCanvas);
-            console.log('✓ Added image to gallery. Total images:', gallery.children.length);
+            console.log('✓ Added image to gallery. Generation:', generationCount, 'Total images:', gallery.children.length);
+            
+            // Ensure 3rd image is definitely added - double check
+            if (generationCount === 3) {
+                console.log('✓✓✓ 3rd generation image confirmed in gallery');
+            }
         }
         
         // Hide the main outputCanvas since all frames go to gallery
