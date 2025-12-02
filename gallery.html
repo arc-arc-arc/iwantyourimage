@@ -42,8 +42,8 @@
         
         .all-images-gallery {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
             width: 100%;
             padding: 20px 0;
         }
@@ -60,6 +60,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            will-change: transform;
         }
         
         .gallery-item img {
@@ -134,7 +135,7 @@
         // Pagination and lazy loading state
         let allImageFiles = [];
         let currentIndex = 0;
-        const IMAGES_PER_BATCH = 10;
+        const IMAGES_PER_BATCH = 15; // Load 15 at a time for better UX
         let isLoading = false;
         let allImagesLoaded = false;
 
@@ -253,20 +254,25 @@
             for (const file of batch) {
                 const { data: urlData } = supabaseClient.storage
                     .from(SUPABASE_BUCKET)
-                    .getPublicUrl(file.fullPath);
+                    .getPublicUrl(file.fullPath, {
+                        transform: {
+                            width: 400,
+                            height: 400,
+                            resize: 'contain',
+                            quality: 70
+                        }
+                    });
 
                 if (urlData?.publicUrl) {
-                    // Add Supabase image transformation for smaller thumbnail
-                    // Format: ?width=400&quality=80
-                    const thumbnailUrl = `${urlData.publicUrl}?width=400&quality=80`;
-                    
                     const item = document.createElement('div');
                     item.className = 'gallery-item';
                     
                     const img = document.createElement('img');
-                    img.dataset.src = thumbnailUrl; // Use data-src for lazy loading
+                    img.dataset.src = urlData.publicUrl; // Use data-src for lazy loading
                     img.alt = file.name;
                     img.className = 'lazy-image';
+                    img.loading = 'lazy'; // Native lazy loading as backup
+                    img.decoding = 'async'; // Async image decoding
                     
                     // Placeholder while loading
                     img.style.backgroundColor = '#f0f0f0';
@@ -300,13 +306,19 @@
                             img.onload = () => {
                                 img.style.backgroundColor = 'transparent';
                             };
+                            img.onerror = () => {
+                                // If transform fails, try original URL
+                                console.warn('Image failed to load, retrying without transform');
+                                img.style.backgroundColor = '#ffeeee';
+                            };
                             delete img.dataset.src;
                             imageObserver.unobserve(img);
                         }
                     }
                 });
             }, {
-                rootMargin: '100px' // Start loading 100px before image enters viewport
+                rootMargin: '200px', // Start loading 200px before image enters viewport
+                threshold: 0.01
             });
 
             observer = imageObserver;
