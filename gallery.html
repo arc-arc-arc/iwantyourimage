@@ -67,6 +67,15 @@
             height: 100%;
             object-fit: contain;
             display: block;
+            transition: opacity 0.3s ease;
+        }
+        
+        .lazy-image {
+            opacity: 0;
+        }
+        
+        .lazy-image[src] {
+            opacity: 1;
         }
         
         .loading {
@@ -122,7 +131,17 @@
         const galleryEl = document.getElementById('gallery');
         const emptyEl = document.getElementById('empty');
 
-        async function loadGalleryImages() {
+        // Pagination and lazy loading state
+        let allImageFiles = [];
+        let currentIndex = 0;
+        const IMAGES_PER_BATCH = 10;
+        let isLoading = false;
+        let allImagesLoaded = false;
+
+        // Intersection Observer for lazy loading
+        let observer;
+
+        async function fetchAllImagePaths() {
             if (!supabaseClient) {
                 loadingEl.style.display = 'none';
                 errorEl.textContent = 'Supabase not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY.';
@@ -131,8 +150,7 @@
             }
 
             try {
-                // Recursively list all files from all user folders
-                const allImageFiles = [];
+                const allFiles = [];
                 
                 // First, list all folders (user IDs)
                 const { data: folders, error: foldersError } = await supabaseClient.storage
@@ -142,9 +160,7 @@
                         offset: 0
                     });
 
-                if (foldersError) {
-                    throw foldersError;
-                }
+                if (foldersError) throw foldersError;
 
                 // Filter to get only folders (user directories)
                 const userFolders = folders.filter(item => !item.name.includes('.'));
@@ -159,7 +175,6 @@
                         });
 
                     if (!filesError && files) {
-                        // Filter to only image files and add folder path
                         const imageFiles = files
                             .filter(file => file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
                             .map(file => ({
@@ -167,7 +182,7 @@
                                 fullPath: `${folder.name}/${file.name}`
                             }));
                         
-                        allImageFiles.push(...imageFiles);
+                        allFiles.push(...imageFiles);
                     }
                 }
 
@@ -187,53 +202,136 @@
                             fullPath: file.name
                         }));
                     
-                    allImageFiles.push(...rootImageFiles);
+                    allFiles.push(...rootImageFiles);
                 }
 
-                loadingEl.style.display = 'none';
-
-                if (allImageFiles.length === 0) {
+                if (allFiles.length === 0) {
+                    loadingEl.style.display = 'none';
                     emptyEl.style.display = 'block';
                     return;
                 }
 
                 // Shuffle array to display in random order
-                for (let i = allImageFiles.length - 1; i > 0; i--) {
+                for (let i = allFiles.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
-                    [allImageFiles[i], allImageFiles[j]] = [allImageFiles[j], allImageFiles[i]];
+                    [allFiles[i], allFiles[j]] = [allFiles[j], allFiles[i]];
                 }
 
+                allImageFiles = allFiles;
+                console.log(`Found ${allImageFiles.length} images. Loading first batch...`);
+                
+                loadingEl.style.display = 'none';
                 galleryEl.style.display = 'grid';
-
-                // Get public URLs for each image
-                for (const file of allImageFiles) {
-                    const { data: urlData } = supabaseClient.storage
-                        .from(SUPABASE_BUCKET)
-                        .getPublicUrl(file.fullPath);
-
-                    if (urlData?.publicUrl) {
-                        const item = document.createElement('div');
-                        item.className = 'gallery-item';
-                        
-                        const img = document.createElement('img');
-                        img.src = urlData.publicUrl;
-                        img.alt = file.name;
-                        img.loading = 'lazy';
-                        
-                        item.appendChild(img);
-                        galleryEl.appendChild(item);
-                    }
-                }
+                
+                // Load first batch
+                await loadNextBatch();
+                
+                // Set up intersection observer for infinite scroll
+                setupIntersectionObserver();
+                
             } catch (error) {
-                console.error('Error loading gallery:', error);
+                console.error('Error fetching image paths:', error);
                 loadingEl.style.display = 'none';
                 errorEl.textContent = 'Failed to load images. Please check your Supabase configuration.';
                 errorEl.style.display = 'block';
             }
         }
 
-        // Load images when page loads
-        loadGalleryImages();
+        async function loadNextBatch() {
+            if (isLoading || allImagesLoaded) return;
+            if (currentIndex >= allImageFiles.length) {
+                allImagesLoaded = true;
+                return;
+            }
+
+            isLoading = true;
+            console.log(`Loading batch: ${currentIndex} to ${currentIndex + IMAGES_PER_BATCH}`);
+
+            const batch = allImageFiles.slice(currentIndex, currentIndex + IMAGES_PER_BATCH);
+            currentIndex += IMAGES_PER_BATCH;
+
+            for (const file of batch) {
+                const { data: urlData } = supabaseClient.storage
+                    .from(SUPABASE_BUCKET)
+                    .getPublicUrl(file.fullPath);
+
+                if (urlData?.publicUrl) {
+                    // Add Supabase image transformation for smaller thumbnail
+                    // Format: ?width=400&quality=80
+                    const thumbnailUrl = `${urlData.publicUrl}?width=400&quality=80`;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+                    
+                    const img = document.createElement('img');
+                    img.dataset.src = thumbnailUrl; // Use data-src for lazy loading
+                    img.alt = file.name;
+                    img.className = 'lazy-image';
+                    
+                    // Placeholder while loading
+                    img.style.backgroundColor = '#f0f0f0';
+                    
+                    item.appendChild(img);
+                    galleryEl.appendChild(item);
+                    
+                    // Observe image for lazy loading
+                    if (observer) {
+                        observer.observe(img);
+                    }
+                }
+            }
+
+            if (currentIndex >= allImageFiles.length) {
+                allImagesLoaded = true;
+                console.log('All images loaded!');
+            }
+
+            isLoading = false;
+        }
+
+        function setupIntersectionObserver() {
+            // Observer for lazy loading images
+            const imageObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        if (img.dataset.src) {
+                            img.src = img.dataset.src;
+                            img.onload = () => {
+                                img.style.backgroundColor = 'transparent';
+                            };
+                            delete img.dataset.src;
+                            imageObserver.unobserve(img);
+                        }
+                    }
+                });
+            }, {
+                rootMargin: '100px' // Start loading 100px before image enters viewport
+            });
+
+            observer = imageObserver;
+
+            // Observer for infinite scroll (load more when near bottom)
+            const sentinelEl = document.createElement('div');
+            sentinelEl.id = 'sentinel';
+            sentinelEl.style.height = '1px';
+            galleryEl.appendChild(sentinelEl);
+
+            const scrollObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !isLoading && !allImagesLoaded) {
+                        loadNextBatch();
+                    }
+                });
+            }, {
+                rootMargin: '200px' // Trigger 200px before reaching sentinel
+            });
+
+            scrollObserver.observe(sentinelEl);
+        }
+
+        // Initialize gallery
+        fetchAllImagePaths();
     </script>
 </body>
 </html>
