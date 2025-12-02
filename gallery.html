@@ -135,7 +135,7 @@
         // Pagination and lazy loading state
         let allImageFiles = [];
         let currentIndex = 0;
-        const IMAGES_PER_BATCH = 15; // Load 15 at a time for better UX
+        const IMAGES_PER_BATCH = 12; // Load 12 at a time (3 rows of 4 on desktop)
         let isLoading = false;
         let allImagesLoaded = false;
 
@@ -219,16 +219,20 @@
                 }
 
                 allImageFiles = allFiles;
-                console.log(`Found ${allImageFiles.length} images. Loading first batch...`);
+                console.log(`Found ${allImageFiles.length} images. Loading first batch immediately...`);
                 
-                loadingEl.style.display = 'none';
+                loadingEl.textContent = 'loading first images...';
                 galleryEl.style.display = 'grid';
                 
-                // Load first batch
+                // Load first batch immediately (priority)
                 await loadNextBatch();
+                
+                loadingEl.style.display = 'none';
                 
                 // Set up intersection observer for infinite scroll
                 setupIntersectionObserver();
+                
+                console.log('First batch loaded! Scroll down to load more.');
                 
             } catch (error) {
                 console.error('Error fetching image paths:', error);
@@ -251,37 +255,55 @@
             const batch = allImageFiles.slice(currentIndex, currentIndex + IMAGES_PER_BATCH);
             currentIndex += IMAGES_PER_BATCH;
 
-            for (const file of batch) {
+            const isFirstBatch = currentIndex - IMAGES_PER_BATCH === 0;
+            
+            for (let i = 0; i < batch.length; i++) {
+                const file = batch[i];
                 const { data: urlData } = supabaseClient.storage
                     .from(SUPABASE_BUCKET)
-                    .getPublicUrl(file.fullPath, {
-                        transform: {
-                            width: 400,
-                            height: 400,
-                            resize: 'contain',
-                            quality: 70
-                        }
-                    });
+                    .getPublicUrl(file.fullPath);
 
                 if (urlData?.publicUrl) {
+                    // Try to use Supabase transform, fallback to query params
+                    let imageUrl = urlData.publicUrl;
+                    
+                    // Check if URL supports transform (Supabase Pro feature)
+                    // If not available, these params will be ignored
+                    if (imageUrl.includes('supabase.co/storage')) {
+                        imageUrl = `${imageUrl}?width=400&height=400&resize=contain&quality=70`;
+                    }
+                    
                     const item = document.createElement('div');
                     item.className = 'gallery-item';
                     
                     const img = document.createElement('img');
-                    img.dataset.src = urlData.publicUrl; // Use data-src for lazy loading
+                    
+                    // First batch loads immediately, rest use lazy loading
+                    if (isFirstBatch) {
+                        img.src = imageUrl; // Load immediately
+                        img.loading = 'eager';
+                        console.log(`Loading image ${i + 1} immediately (first batch)`);
+                    } else {
+                        img.dataset.src = imageUrl; // Lazy load
+                        img.loading = 'lazy';
+                        img.className = 'lazy-image';
+                    }
+                    
                     img.alt = file.name;
-                    img.className = 'lazy-image';
-                    img.loading = 'lazy'; // Native lazy loading as backup
-                    img.decoding = 'async'; // Async image decoding
+                    img.decoding = 'async';
                     
                     // Placeholder while loading
                     img.style.backgroundColor = '#f0f0f0';
                     
+                    img.onload = () => {
+                        img.style.backgroundColor = 'transparent';
+                    };
+                    
                     item.appendChild(img);
                     galleryEl.appendChild(item);
                     
-                    // Observe image for lazy loading
-                    if (observer) {
+                    // Only observe for lazy loading if not first batch
+                    if (!isFirstBatch && observer) {
                         observer.observe(img);
                     }
                 }
@@ -332,11 +354,12 @@
             const scrollObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting && !isLoading && !allImagesLoaded) {
+                        console.log('Near bottom, loading next batch...');
                         loadNextBatch();
                     }
                 });
             }, {
-                rootMargin: '200px' // Trigger 200px before reaching sentinel
+                rootMargin: '400px' // Trigger 400px before reaching sentinel (earlier loading)
             });
 
             scrollObserver.observe(sentinelEl);
