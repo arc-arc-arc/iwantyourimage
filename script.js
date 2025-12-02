@@ -752,6 +752,42 @@ function applyDistortion(imageData, width, height, strength) {
     return destData;
 }
 
+// Compress and resize canvas to reasonable size for upload
+function compressCanvas(canvas, maxWidth = 1920, maxHeight = 1920, quality = 0.85) {
+    const originalWidth = canvas.width;
+    const originalHeight = canvas.height;
+    
+    // Calculate new dimensions maintaining aspect ratio
+    let newWidth = originalWidth;
+    let newHeight = originalHeight;
+    
+    if (originalWidth > maxWidth || originalHeight > maxHeight) {
+        const ratio = Math.min(maxWidth / originalWidth, maxHeight / originalHeight);
+        newWidth = Math.round(originalWidth * ratio);
+        newHeight = Math.round(originalHeight * ratio);
+    }
+    
+    // If already small enough, return original
+    if (newWidth === originalWidth && newHeight === originalHeight) {
+        return canvas;
+    }
+    
+    // Create compressed canvas
+    const compressedCanvas = document.createElement('canvas');
+    compressedCanvas.width = newWidth;
+    compressedCanvas.height = newHeight;
+    const ctx = compressedCanvas.getContext('2d');
+    
+    // Use high-quality scaling
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(canvas, 0, 0, newWidth, newHeight);
+    
+    console.log(`📐 Compressed image: ${originalWidth}x${originalHeight} → ${newWidth}x${newHeight}`);
+    
+    return compressedCanvas;
+}
+
 // Upload image to Supabase storage
 async function uploadImageToSupabase(canvas) {
     console.log('uploadImageToSupabase called');
@@ -766,20 +802,30 @@ async function uploadImageToSupabase(canvas) {
     }
     
     try {
-        // Convert canvas to blob
-        canvas.toBlob(async (blob) => {
+        // Compress canvas before uploading (max 1920px, quality 0.85)
+        const compressedCanvas = compressCanvas(canvas, 1920, 1920, 0.85);
+        
+        // Convert compressed canvas to JPEG blob (smaller than PNG)
+        compressedCanvas.toBlob(async (blob) => {
             if (!blob) {
                 console.error('❌ Failed to convert canvas to blob');
                 return;
             }
             
-            console.log('✓ Canvas converted to blob, size:', blob.size, 'bytes');
+            const originalSize = canvas.width * canvas.height * 4; // Rough estimate
+            const compressedSize = blob.size;
+            const compressionRatio = ((1 - compressedSize / originalSize) * 100).toFixed(1);
+            
+            console.log('✓ Canvas converted to blob');
+            console.log('  Original size estimate:', (originalSize / 1024 / 1024).toFixed(2), 'MB');
+            console.log('  Compressed size:', (compressedSize / 1024 / 1024).toFixed(2), 'MB');
+            console.log('  Compression:', compressionRatio + '%');
             
             // Get user ID and generate unique filename
             const userId = getUserId();
             const timestamp = Date.now();
             const randomId = Math.random().toString(36).substring(2, 15);
-            const randomFilename = `${timestamp}-${randomId}.png`;
+            const randomFilename = `${timestamp}-${randomId}.jpg`; // Use .jpg for smaller files
             
             // Create object key: ${userId}/${randomFilename}
             const objectKey = `${userId}/${randomFilename}`;
@@ -793,7 +839,7 @@ async function uploadImageToSupabase(canvas) {
             const { data, error } = await supabaseClient.storage
                 .from(SUPABASE_BUCKET)
                 .upload(objectKey, blob, {
-                    contentType: 'image/png',
+                    contentType: 'image/jpeg',
                     upsert: false
                 });
             
@@ -806,7 +852,7 @@ async function uploadImageToSupabase(canvas) {
                 console.log('  Path:', data.path);
                 console.log('  Full URL:', supabaseClient.storage.from(SUPABASE_BUCKET).getPublicUrl(data.path).data.publicUrl);
             }
-        }, 'image/png');
+        }, 'image/jpeg', 0.85); // JPEG with 85% quality
     } catch (error) {
         console.error('❌ Exception in uploadImageToSupabase:', error);
         console.error('  Stack:', error.stack);
