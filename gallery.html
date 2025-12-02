@@ -42,8 +42,8 @@
         
         .all-images-gallery {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
             width: 100%;
             padding: 20px 0;
         }
@@ -264,14 +264,8 @@
                     .getPublicUrl(file.fullPath);
 
                 if (urlData?.publicUrl) {
-                    // Try to use Supabase transform, fallback to query params
+                    // Use original URL (already compressed to 800px on upload)
                     let imageUrl = urlData.publicUrl;
-                    
-                    // Check if URL supports transform (Supabase Pro feature)
-                    // If not available, these params will be ignored
-                    if (imageUrl.includes('supabase.co/storage')) {
-                        imageUrl = `${imageUrl}?width=400&height=400&resize=contain&quality=70`;
-                    }
                     
                     const item = document.createElement('div');
                     item.className = 'gallery-item';

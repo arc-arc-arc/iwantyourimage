@@ -752,8 +752,8 @@ function applyDistortion(imageData, width, height, strength) {
     return destData;
 }
 
-// Compress and resize canvas to reasonable size for upload
-function compressCanvas(canvas, maxWidth = 1920, maxHeight = 1920, quality = 0.85) {
+// Compress and resize canvas to reasonable size for upload (MUCH smaller)
+function compressCanvas(canvas, maxWidth = 800, maxHeight = 800, quality = 0.85) {
     const originalWidth = canvas.width;
     const originalHeight = canvas.height;
     
@@ -802,8 +802,8 @@ async function uploadImageToSupabase(canvas) {
     }
     
     try {
-        // Compress canvas before uploading (max 1920px, quality 0.85)
-        const compressedCanvas = compressCanvas(canvas, 1920, 1920, 0.85);
+        // Compress canvas before uploading (max 800px, quality 0.70) - MUCH smaller for faster loading
+        const compressedCanvas = compressCanvas(canvas, 800, 800, 0.70);
         
         // Convert compressed canvas to JPEG blob (smaller than PNG)
         compressedCanvas.toBlob(async (blob) => {
@@ -852,7 +852,7 @@ async function uploadImageToSupabase(canvas) {
                 console.log('  Path:', data.path);
                 console.log('  Full URL:', supabaseClient.storage.from(SUPABASE_BUCKET).getPublicUrl(data.path).data.publicUrl);
             }
-        }, 'image/jpeg', 0.85); // JPEG with 85% quality
+        }, 'image/jpeg', 0.65); // JPEG with 65% quality (smaller files)
     } catch (error) {
         console.error('❌ Exception in uploadImageToSupabase:', error);
         console.error('  Stack:', error.stack);
