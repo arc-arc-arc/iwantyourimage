@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cleanup Supabase Bucket</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        
+        button {
+            padding: 15px 30px;
+            background-color: white;
+            border: 2px solid black;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 1em;
+            cursor: pointer;
+            margin: 10px;
+        }
+        
+        button:hover {
+            background-color: black;
+            color: white;
+        }
+        
+        .danger {
+            background-color: #ffeeee;
+            border-color: #cc0000;
+            color: #cc0000;
+        }
+        
+        .danger:hover {
+            background-color: #cc0000;
+            color: white;
+        }
+        
+        #log {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border: 1px solid #ccc;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cleanup Supabase Gallery Bucket</h1>
+    
+    <p><strong>⚠️ WARNING:</strong> This will delete ALL images from your Supabase gallery bucket.</p>
+    
+    <p>Use this to remove old large images and start fresh with the new compressed format.</p>
+    
+    <button id="listBtn">1. List All Files (Check First)</button>
+    <button id="deleteBtn" class="danger">2. DELETE ALL FILES</button>
+    
+    <div id="log"></div>
+
+    <script src="config.js"></script>
+    <script>
+        const SUPABASE_URL = window.SUPABASE_URL || 'https://wpsxzdivbmxogqqfvxgb.supabase.co';
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwc3h6ZGl2Ym14b2dxcWZ2eGdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2MTEwNDIsImV4cCI6MjA4MDE4NzA0Mn0.0I40DrIRhA8AaOHSVIPPjeX_enx6XYzndbNRfwzx210';
+        const SUPABASE_BUCKET = window.SUPABASE_BUCKET || 'gallery';
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const logEl = document.getElementById('log');
+
+        function log(message) {
+            logEl.textContent += message + '\n';
+            console.log(message);
+        }
+
+        async function getAllFiles() {
+            log('Fetching all files from bucket...');
+            const allFiles = [];
+            
+            try {
+                // List all folders (user IDs)
+                const { data: folders, error: foldersError } = await supabaseClient.storage
+                    .from(SUPABASE_BUCKET)
+                    .list('', {
+                        limit: 1000,
+                        offset: 0
+                    });
+
+                if (foldersError) throw foldersError;
+
+                // Get folders only
+                const userFolders = folders.filter(item => !item.name.includes('.'));
+                log(`Found ${userFolders.length} user folders`);
+
+                // List files from each user folder
+                for (const folder of userFolders) {
+                    const { data: files, error: filesError } = await supabaseClient.storage
+                        .from(SUPABASE_BUCKET)
+                        .list(folder.name, {
+                            limit: 1000,
+                            offset: 0
+                        });
+
+                    if (!filesError && files) {
+                        const imageFiles = files
+                            .filter(file => file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+                            .map(file => `${folder.name}/${file.name}`);
+                        
+                        log(`  ${folder.name}: ${imageFiles.length} images`);
+                        allFiles.push(...imageFiles);
+                    }
+                }
+
+                // Also check root level
+                const { data: rootFiles, error: rootError } = await supabaseClient.storage
+                    .from(SUPABASE_BUCKET)
+                    .list('', {
+                        limit: 1000,
+                        offset: 0
+                    });
+
+                if (!rootError && rootFiles) {
+                    const rootImageFiles = rootFiles
+                        .filter(file => file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+                        .map(file => file.name);
+                    
+                    if (rootImageFiles.length > 0) {
+                        log(`  Root: ${rootImageFiles.length} images`);
+                        allFiles.push(...rootImageFiles);
+                    }
+                }
+
+                log(`\nTotal: ${allFiles.length} files`);
+                return allFiles;
+                
+            } catch (error) {
+                log(`ERROR: ${error.message}`);
+                return [];
+            }
+        }
+
+        document.getElementById('listBtn').addEventListener('click', async () => {
+            logEl.textContent = '';
+            const files = await getAllFiles();
+            
+            if (files.length > 0) {
+                log('\nFiles to be deleted:');
+                files.forEach(file => log(`  - ${file}`));
+            }
+        });
+
+        document.getElementById('deleteBtn').addEventListener('click', async () => {
+            if (!confirm('⚠️ Are you SURE you want to DELETE ALL images from the gallery bucket? This cannot be undone!')) {
+                return;
+            }
+            
+            if (!confirm('⚠️ FINAL WARNING: This will permanently delete all images. Continue?')) {
+                return;
+            }
+            
+            logEl.textContent = '';
+            log('Starting deletion...\n');
+            
+            const files = await getAllFiles();
+            
+            if (files.length === 0) {
+                log('No files to delete!');
+                return;
+            }
+            
+            log(`\nDeleting ${files.length} files...`);
+            
+            // Delete in batches
+            const batchSize = 50;
+            let deleted = 0;
+            
+            for (let i = 0; i < files.length; i += batchSize) {
+                const batch = files.slice(i, i + batchSize);
+                
+                const { data, error } = await supabaseClient.storage
+                    .from(SUPABASE_BUCKET)
+                    .remove(batch);
+                
+                if (error) {
+                    log(`ERROR deleting batch ${i / batchSize + 1}: ${error.message}`);
+                } else {
+                    deleted += batch.length;
+                    log(`Deleted ${deleted}/${files.length} files...`);
+                }
+            }
+            
+            log(`\n✅ DONE! Deleted ${deleted} files.`);
+            log('You can now close this page and start fresh with compressed images.');
+        });
+    </script>
+</body>
+</html>
+
